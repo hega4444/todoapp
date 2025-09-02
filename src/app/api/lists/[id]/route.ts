@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-// Delete a specific list
+/**
+ * Delete a list and all its associated todos
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -10,25 +12,19 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    if (!id) {
-      return NextResponse.json(
-        { error: 'List ID is required' },
-        { status: 400 }
-      );
+    if (!id?.trim()) {
+      return NextResponse.json({ error: 'List ID is required' }, { status: 400 });
     }
 
     const db = await mongodb.connect();
-    
-    // Get session token from query params to identify the user
     const url = new URL(request.url);
     const sessionToken = url.searchParams.get('sessionToken') || 'default';
     
-    // Delete all todos in this list for this session first
+    // Delete all todos in this list first
     await db.collection('todos').deleteMany({ listId: id, sessionToken });
     
-    // Delete the list itself for this session
-    let query: any = { sessionToken };
-    
+    // Build query for list deletion
+    const query: any = { sessionToken };
     if (ObjectId.isValid(id)) {
       query._id = new ObjectId(id);
     } else {
@@ -38,10 +34,7 @@ export async function DELETE(
     const result = await db.collection('lists').deleteOne(query);
 
     if (result.deletedCount === 0) {
-      return NextResponse.json(
-        { error: 'List not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });

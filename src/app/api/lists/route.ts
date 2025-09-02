@@ -1,33 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 
-// Get all lists
+/**
+ * Format list for client response
+ */
+function formatList(list: any) {
+  return { ...list, id: list._id ? list._id.toString() : list.id, _id: undefined };
+}
+
+/**
+ * Get all lists for a user session
+ */
 export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
-    
-    // Get session token from query params to identify the user
     const url = new URL(request.url);
     const sessionToken = url.searchParams.get('sessionToken') || 'default';
     
     const lists = await db.collection('lists').find({ sessionToken }).toArray();
-
-    return NextResponse.json(
-      lists.map(list => ({ ...list, id: list._id ? list._id.toString() : list.id, _id: undefined }))
-    );
+    return NextResponse.json(lists.map(formatList));
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// Create new list
+/**
+ * Create a new list
+ */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, color, sessionToken } = body;
+    const { name, color, sessionToken } = await request.json();
 
-    if (!name || !color) {
+    if (!name?.trim() || !color?.trim()) {
       return NextResponse.json(
         { error: 'Name and color are required' },
         { status: 400 }
@@ -36,8 +41,8 @@ export async function POST(request: NextRequest) {
 
     const db = await mongodb.connect();
     const newList = {
-      name,
-      color,
+      name: name.trim(),
+      color: color.trim(),
       createdAt: new Date(),
       sessionToken: sessionToken || 'default'
     };

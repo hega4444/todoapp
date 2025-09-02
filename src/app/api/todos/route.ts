@@ -2,57 +2,76 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
 
-// Get all todos and lists
+const DEFAULT_LISTS = [
+  { id: 'personal', name: 'Personal', color: '#3B82F6' },
+  { id: 'work', name: 'Work', color: '#EF4444' },
+  { id: 'shopping', name: 'Shopping', color: '#10B981' }
+];
+
+/**
+ * Create default lists for new users
+ */
+async function createDefaultLists(db: any, sessionToken: string, lists: any[]) {
+  const defaultLists = DEFAULT_LISTS.map(list => ({
+    ...list,
+    createdAt: new Date(),
+    sessionToken
+  }));
+  
+  const result = await db.collection('lists').insertMany(defaultLists);
+  const insertedLists = defaultLists.map((list, index) => ({
+    ...list,
+    _id: result.insertedIds[index]
+  }));
+  
+  lists.push(...insertedLists);
+}
+
+/**
+ * Decrypt todo text and format for client
+ */
+function decryptTodo(todo: any, sessionToken: string) {
+  try {
+    const decryptedText = EncryptionService.isEncrypted(todo.text) 
+      ? EncryptionService.decrypt(todo.text, sessionToken)
+      : todo.text; // Support legacy unencrypted todos
+    
+    return { ...todo, text: decryptedText, id: todo._id.toString(), _id: undefined };
+  } catch (error) {
+    console.error('Failed to decrypt todo:', error);
+    return { ...todo, text: '[Decryption Failed]', id: todo._id.toString(), _id: undefined };
+  }
+}
+
+/**
+ * Format list for client response
+ */
+function formatList(list: any) {
+  return { ...list, id: list._id ? list._id.toString() : list.id, _id: undefined };
+}
+
+/**
+ * Get all todos and lists for a user session with automatic decryption
+ */
 export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
-    
-    // Get session token from query params to identify the user
     const url = new URL(request.url);
     const sessionToken = url.searchParams.get('sessionToken') || 'default';
-    
-    console.log('API Request - Session Token:', sessionToken);
     
     const [todos, lists] = await Promise.all([
       db.collection('todos').find({ sessionToken }).toArray(),
       db.collection('lists').find({ sessionToken }).toArray()
     ]);
-    
-    console.log('Found todos:', todos.length, 'Found lists:', lists.length);
-    console.log('Sample todo sessionToken:', todos.length > 0 ? todos[0].sessionToken : 'none');
-    console.log('Sample list sessionToken:', lists.length > 0 ? lists[0].sessionToken : 'none');
 
-    // For new users, create default lists only if they have no lists and no todos
+    // Create default lists for new users
     if (lists.length === 0 && todos.length === 0) {
-      const defaultLists = [
-        { id: 'personal', name: 'Personal', color: '#3B82F6', createdAt: new Date(), sessionToken },
-        { id: 'work', name: 'Work', color: '#EF4444', createdAt: new Date(), sessionToken },
-        { id: 'shopping', name: 'Shopping', color: '#10B981', createdAt: new Date(), sessionToken }
-      ];
-      const result = await db.collection('lists').insertMany(defaultLists);
-      const insertedLists = defaultLists.map((list, index) => ({
-        ...list,
-        _id: result.insertedIds[index]
-      }));
-      lists.push(...insertedLists);
+      await createDefaultLists(db, sessionToken, lists);
     }
 
-    // Decrypt todo texts for the client
-    const decryptedTodos = todos.map(todo => {
-      try {
-        const decryptedText = EncryptionService.isEncrypted(todo.text) 
-          ? EncryptionService.decrypt(todo.text, sessionToken)
-          : todo.text; // Support for non-encrypted legacy todos
-        return { ...todo, text: decryptedText, id: todo._id.toString(), _id: undefined };
-      } catch (error) {
-        console.error('Failed to decrypt todo text:', error);
-        return { ...todo, text: '[Decryption Failed]', id: todo._id.toString(), _id: undefined };
-      }
-    });
-
     return NextResponse.json({ 
-      todos: decryptedTodos,
-      lists: lists.map(list => ({ ...list, id: list._id ? list._id.toString() : list.id, _id: undefined }))
+      todos: todos.map(todo => decryptTodo(todo, sessionToken)),
+      lists: lists.map(formatList)
     });
   } catch (error) {
     console.error('Database error:', error);
@@ -60,13 +79,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Add new todo
+/**
+ * Create a new todo with encrypted text
+ */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { text, listId, sessionToken } = body;
+    const { text, listId, sessionToken } = await request.json();
 
-    if (!text || !listId) {
+    if (!text?.trim() || !listId) {
       return NextResponse.json(
         { error: 'Text and listId are required' },
         { status: 400 }
@@ -74,25 +94,23 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await mongodb.connect();
-    
-    // Encrypt the todo text before storing
-    const encryptedText = EncryptionService.encrypt(text, sessionToken || 'default');
+    const finalSessionToken = sessionToken || 'default';
     
     const newTodo = {
-      text: encryptedText,
+      text: EncryptionService.encrypt(text, finalSessionToken),
       completed: false,
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),
-      sessionToken: sessionToken || 'default'
+      sessionToken: finalSessionToken
     };
 
     const result = await db.collection('todos').insertOne(newTodo);
     
-    // Return the todo with decrypted text for the client
+    // Return decrypted todo for client
     return NextResponse.json({
       ...newTodo,
-      text: text, // Return original unencrypted text to client
+      text, // Return original unencrypted text
       id: result.insertedId.toString()
     }, { status: 201 });
   } catch (error) {

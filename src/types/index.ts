@@ -19,5 +19,4 @@ export type FilterType = 'all' | 'pending' | 'completed';
 export interface User {
   id: string;
   sessionToken: string;
-  encryptionKey: string;
 }
