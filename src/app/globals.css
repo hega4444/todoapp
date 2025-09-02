@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Theme Variables */
+:root,
+[data-theme="light"] {
+  /* Background colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  
+  /* Text colors */
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  
+  /* Border colors */
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  
+  /* Interactive colors */
+  --interactive-primary: #3b82f6;
+  --interactive-primary-hover: #2563eb;
+  --interactive-secondary: #6b7280;
+  --interactive-secondary-hover: #4b5563;
+  
+  /* Status colors */
+  --status-success: #10b981;
+  --status-error: #ef4444;
+  --status-warning: #f59e0b;
+  
+  /* Color picker */
+  --color-picker-border: #c0c7d6;
+  
+  /* Gradient background */
+  --gradient-bg: radial-gradient(circle at bottom right, #dbeafe 0%, transparent 50%), 
+                 linear-gradient(135deg, #e2e2d8 0%, #f6f1f9 50%, #e4f5b4 100%);
+  
+  /* Shadow */
+  --shadow-connection-badge: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme="dark"] {
+  /* Background colors */
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  
+  /* Text colors */
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  
+  /* Border colors */
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  
+  /* Interactive colors */
+  --interactive-primary: #60a5fa;
+  --interactive-primary-hover: #3b82f6;
+  --interactive-secondary: #9ca3af;
+  --interactive-secondary-hover: #d1d5db;
+  
+  /* Status colors */
+  --status-success: #34d399;
+  --status-error: #f87171;
+  --status-warning: #fbbf24;
+  
+  /* Color picker */
+  --color-picker-border: #ffffff;
+  
+  /* Gradient background */
+  --gradient-bg: radial-gradient(circle at bottom right, #1a2f75 0%, transparent 50%), 
+                 linear-gradient(135deg, #1f2937 0%, #374151 50%, #1f2937 100%);
+  
+  /* Shadow */
+  --shadow-connection-badge: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Hide scrollbar completely for dropdowns */
+.no-scrollbar-arrows::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.no-scrollbar-arrows {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom scrollbar for main todo list (no arrow buttons) */
+.scrollbar-no-arrows::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-no-arrows::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.scrollbar-no-arrows::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.scrollbar-no-arrows::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.scrollbar-no-arrows::-webkit-scrollbar-button {
+  display: none;
+}
+
+.bg-gradient-radial {
+  background: var(--gradient-bg);
+}
+
+/* Connection badge animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.8);
+  }
 }
