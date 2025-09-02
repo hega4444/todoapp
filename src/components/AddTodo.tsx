@@ -27,11 +27,18 @@ export default function AddTodo() {
 
   const selectedList = lists.find(list => list.id === selectedListId);
 
-  // Get the next available color that hasn't been used
-  const getNextAvailableColor = () => {
+  // Get a random available color that hasn't been used
+  const getRandomAvailableColor = () => {
     const usedColors = lists.map(list => list.color);
-    const availableColor = COLORS.find(color => !usedColors.includes(color));
-    return availableColor || COLORS[0]; // Fallback to first color if all are used
+    const availableColors = COLORS.filter(color => !usedColors.includes(color));
+    
+    if (availableColors.length > 0) {
+      // Pick random color from available ones
+      return availableColors[Math.floor(Math.random() * availableColors.length)];
+    }
+    
+    // If all colors are used, pick any random color
+    return COLORS[Math.floor(Math.random() * COLORS.length)];
   };
 
   // Close dropdown when clicking outside
@@ -150,7 +157,7 @@ export default function AddTodo() {
                       type="button"
                       onClick={() => {
                         setIsCreatingList(true);
-                        setSelectedColor(getNextAvailableColor());
+                        setSelectedColor(getRandomAvailableColor());
                         setTimeout(() => {
                           scrollContainerRef.current?.scrollTo({
                             top: scrollContainerRef.current.scrollHeight,
