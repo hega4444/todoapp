@@ -12,7 +12,12 @@ class MongoDB {
     }
 
     try {
-      this.client = new MongoClient(config.database.connectionString);
+      this.client = new MongoClient(config.database.connectionString, {
+        tls: true,
+        tlsInsecure: true,
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 10,
+      });
       await this.client.connect();
       this.db = this.client.db(config.database.databaseName);
       
