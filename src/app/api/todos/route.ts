@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
-
-const DEFAULT_LISTS = [
-  { id: 'personal', name: 'Personal', color: '#3B82F6' },
-  { id: 'work', name: 'Work', color: '#EF4444' },
-  { id: 'shopping', name: 'Shopping', color: '#10B981' }
-];
+import { DEFAULT_LISTS, ERROR_MESSAGES } from '@/lib/constants';
 
 /**
  * Create default lists for new users
@@ -53,11 +48,18 @@ function formatList(list: any) {
 /**
  * Get all todos and lists for a user session with automatic decryption
  */
+function getSessionTokenFromHeader(request: NextRequest): string {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return 'default';
+}
+
 export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
-    const url = new URL(request.url);
-    const sessionToken = url.searchParams.get('sessionToken') || 'default';
+    const sessionToken = getSessionTokenFromHeader(request);
     
     const [todos, lists] = await Promise.all([
       db.collection('todos').find({ sessionToken }).toArray(),
@@ -84,7 +86,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { text, listId, sessionToken } = await request.json();
+    const { text, listId } = await request.json();
 
     if (!text?.trim() || !listId) {
       return NextResponse.json(
@@ -94,15 +96,15 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await mongodb.connect();
-    const finalSessionToken = sessionToken || 'default';
+    const sessionToken = getSessionTokenFromHeader(request);
     
     const newTodo = {
-      text: EncryptionService.encrypt(text, finalSessionToken),
+      text: EncryptionService.encrypt(text, sessionToken),
       completed: false,
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),
-      sessionToken: finalSessionToken
+      sessionToken
     };
 
     const result = await db.collection('todos').insertOne(newTodo);

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ConnectionProvider } from "@/contexts/ConnectionContext";
-import { ConnectionBadge } from "@/components/ConnectionBadge";
 
 export const metadata: Metadata = {
   title: "Todo App",
@@ -16,10 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ConnectionProvider>
-          {children}
-          <ConnectionBadge />
-        </ConnectionProvider>
+        {children}
       </body>
     </html>
   );

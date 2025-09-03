@@ -1,27 +1,30 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTodoContext } from '@/contexts/TodoContext';
+import { TodoList } from '@/types';
+import { LIST_COLORS } from '@/lib/constants';
 
-const COLORS = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
-  '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
-];
+interface AddTodoProps {
+  lists: TodoList[];
+  selectedListId: string;
+  onAddTodo: (text: string, listId: string) => Promise<void>;
+  onCreateList: (name: string, color: string) => Promise<void>;
+  onSelectList?: (listId: string) => void;
+}
 
-export default function AddTodo() {
-  const { 
-    lists, 
-    selectedListId, 
-    addTodo, 
-    setSelectedList, 
-    createList 
-  } = useTodoContext();
+export default function AddTodo({ 
+  lists, 
+  selectedListId, 
+  onAddTodo, 
+  onCreateList,
+  onSelectList 
+}: AddTodoProps) {
 
   const [todoText, setTodoText] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [selectedColor, setSelectedColor] = useState<string>(LIST_COLORS[0]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +33,7 @@ export default function AddTodo() {
   // Get a random available color that hasn't been used
   const getRandomAvailableColor = () => {
     const usedColors = lists.map(list => list.color);
-    const availableColors = COLORS.filter(color => !usedColors.includes(color));
+    const availableColors = LIST_COLORS.filter(color => !usedColors.includes(color));
     
     if (availableColors.length > 0) {
       // Pick random color from available ones
@@ -38,7 +41,7 @@ export default function AddTodo() {
     }
     
     // If all colors are used, pick any random color
-    return COLORS[Math.floor(Math.random() * COLORS.length)];
+    return LIST_COLORS[Math.floor(Math.random() * LIST_COLORS.length)];
   };
 
   // Close dropdown when clicking outside
@@ -59,14 +62,14 @@ export default function AddTodo() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (todoText.trim()) {
-      addTodo(todoText.trim(), selectedListId);
+      onAddTodo(todoText.trim(), selectedListId);
       setTodoText('');
     }
   };
 
   const handleCreateList = () => {
     if (newListName.trim()) {
-      createList(newListName.trim(), selectedColor);
+      onCreateList(newListName.trim(), selectedColor);
       setNewListName('');
       setIsCreatingList(false);
       setIsDropdownOpen(false);
@@ -135,7 +138,7 @@ export default function AddTodo() {
                     key={list.id}
                     type="button"
                     onClick={() => {
-                      setSelectedList(list.id);
+                      onSelectList?.(list.id);
                       setIsDropdownOpen(false);
                     }}
                     className="w-full flex items-center gap-3 p-2 text-left rounded-md transition-colors duration-200"
@@ -196,7 +199,7 @@ export default function AddTodo() {
                         autoFocus
                       />
                       <div className="flex gap-1">
-                        {COLORS.map((color) => (
+                        {LIST_COLORS.map((color) => (
                           <button
                             key={color}
                             type="button"

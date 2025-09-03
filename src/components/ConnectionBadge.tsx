@@ -1,10 +1,15 @@
 'use client';
 
-import { useConnection } from '@/contexts/ConnectionContext';
 import { useState, useEffect } from 'react';
 
-export function ConnectionBadge() {
-  const { status } = useConnection();
+type ConnectionStatus = 'online' | 'offline' | 'error';
+
+interface ConnectionBadgeProps {
+  status: ConnectionStatus;
+  lastErrorTime: Date | null;
+}
+
+export function ConnectionBadge({ status }: ConnectionBadgeProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {

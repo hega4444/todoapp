@@ -1,17 +1,26 @@
-import { Todo, TodoList } from '@/types';
+import { 
+  Todo, 
+  TodoList, 
+  ConnectionStatusCallback, 
+  GetTodosAndListsResponse,
+  AppError,
+  DEFAULT_SESSION_TOKEN 
+} from '@/types';
+import { API_ENDPOINTS, ERROR_MESSAGES } from './constants';
 
-type ConnectionStatusCallback = {
-  setOnline: () => void;
-  setError: () => void;
-  setOffline: () => void;
-};
+interface ApiErrorResponse {
+  error: string;
+}
+
+interface SessionResponse {
+  sessionToken: string;
+}
 
 class ApiService {
-  private baseUrl = '/api';
   private sessionToken: string | null = null;
   private connectionCallback: ConnectionStatusCallback | null = null;
 
-  setConnectionCallback(callback: ConnectionStatusCallback) {
+  setConnectionCallback(callback: ConnectionStatusCallback): void {
     this.connectionCallback = callback;
   }
 
@@ -27,7 +36,6 @@ class ApiService {
       
       return response;
     } catch (error) {
-      // Network error or server unavailable
       if (error instanceof TypeError && error.message.includes('fetch')) {
         this.connectionCallback?.setOffline();
       } else {
@@ -37,78 +45,142 @@ class ApiService {
     }
   }
 
-  async getSessionToken(): Promise<string> {
-    if (!this.sessionToken) {
-      const response = await this.handleFetch(`${this.baseUrl}/session`);
-      const data = await response.json();
-      this.sessionToken = data.sessionToken;
+  private async handleApiResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+      try {
+        const errorData: ApiErrorResponse = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        // If JSON parsing fails, use the default error message
+      }
+      throw new AppError(errorMessage, response.status.toString());
     }
-    return this.sessionToken!;
+    
+    return response.json() as Promise<T>;
   }
 
-  async getTodosAndLists(): Promise<{ todos: Todo[], lists: TodoList[] }> {
+  async getSessionToken(): Promise<string> {
+    if (!this.sessionToken) {
+      try {
+        const response = await this.handleFetch(API_ENDPOINTS.SESSION);
+        const data = await this.handleApiResponse<SessionResponse>(response);
+        this.sessionToken = data.sessionToken;
+      } catch (error) {
+        console.warn(ERROR_MESSAGES.SESSION_TOKEN_FAILED);
+        this.sessionToken = DEFAULT_SESSION_TOKEN;
+      }
+    }
+    return this.sessionToken;
+  }
+
+  async getTodosAndLists(): Promise<GetTodosAndListsResponse> {
     const sessionToken = await this.getSessionToken();
-    const response = await this.handleFetch(`${this.baseUrl}/todos?sessionToken=${sessionToken}`);
-    if (!response.ok) throw new Error('Failed to fetch todos and lists');
-    return response.json();
+    const response = await this.handleFetch(API_ENDPOINTS.TODOS, {
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await this.handleApiResponse<{
+      todos: Array<Omit<Todo, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string }>;
+      lists: Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>;
+    }>(response);
+    
+    return {
+      todos: data.todos.map((todo) => ({
+        ...todo,
+        createdAt: new Date(todo.createdAt),
+        updatedAt: new Date(todo.updatedAt)
+      })),
+      lists: data.lists.map((list) => ({
+        ...list,
+        createdAt: new Date(list.createdAt)
+      }))
+    };
   }
 
   async createTodo(text: string, listId: string): Promise<Todo> {
     const sessionToken = await this.getSessionToken();
-    const response = await this.handleFetch(`${this.baseUrl}/todos`, {
+    const response = await this.handleFetch(API_ENDPOINTS.TODOS, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, listId, sessionToken })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify({ text, listId })
     });
-    if (!response.ok) throw new Error('Failed to create todo');
-    return response.json();
+    
+    const data = await this.handleApiResponse<
+      Omit<Todo, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string }
+    >(response);
+    
+    return {
+      ...data,
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt)
+    };
   }
 
   async updateTodo(id: string, updates: Partial<Pick<Todo, 'text' | 'completed'>>): Promise<Todo> {
-    const response = await this.handleFetch(`${this.baseUrl}/todos/${id}`, {
+    const response = await this.handleFetch(`${API_ENDPOINTS.TODOS}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates)
     });
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Update todo failed:', response.status, errorText);
-      throw new Error(`Failed to update todo: ${response.status}`);
-    }
-    const result = await response.json();
-    return result;
+    
+    return this.handleApiResponse<Todo>(response);
   }
 
   async deleteTodo(id: string): Promise<void> {
-    const response = await this.handleFetch(`${this.baseUrl}/todos/${id}`, {
+    const response = await this.handleFetch(`${API_ENDPOINTS.TODOS}/${id}`, {
       method: 'DELETE'
     });
-    if (!response.ok) throw new Error('Failed to delete todo');
+    
+    await this.handleApiResponse<{ success: boolean }>(response);
   }
 
   async getLists(): Promise<TodoList[]> {
-    const response = await this.handleFetch(`${this.baseUrl}/lists`);
-    if (!response.ok) throw new Error('Failed to fetch lists');
-    return response.json();
+    const response = await this.handleFetch(API_ENDPOINTS.LISTS);
+    const data = await this.handleApiResponse<Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>>(response);
+    
+    return data.map((list) => ({
+      ...list,
+      createdAt: new Date(list.createdAt)
+    }));
   }
 
   async createList(name: string, color: string): Promise<TodoList> {
     const sessionToken = await this.getSessionToken();
-    const response = await this.handleFetch(`${this.baseUrl}/lists`, {
+    const response = await this.handleFetch(API_ENDPOINTS.LISTS, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, color, sessionToken })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify({ name, color })
     });
-    if (!response.ok) throw new Error('Failed to create list');
-    return response.json();
+    
+    const data = await this.handleApiResponse<
+      Omit<TodoList, 'createdAt'> & { createdAt: string }
+    >(response);
+    
+    return {
+      ...data,
+      createdAt: new Date(data.createdAt)
+    };
   }
 
   async deleteList(id: string): Promise<void> {
     const sessionToken = await this.getSessionToken();
-    const response = await this.handleFetch(`${this.baseUrl}/lists/${id}?sessionToken=${sessionToken}`, {
-      method: 'DELETE'
+    const response = await this.handleFetch(`${API_ENDPOINTS.LISTS}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
     });
-    if (!response.ok) throw new Error('Failed to delete list');
+    
+    await this.handleApiResponse<{ success: boolean }>(response);
   }
 }
 

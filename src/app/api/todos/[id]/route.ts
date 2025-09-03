@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
+import { ERROR_MESSAGES } from '@/lib/constants';
 
 /**
  * Validate MongoDB ObjectId
@@ -50,7 +51,7 @@ export async function PUT(
     // Get existing todo for session token
     const existingTodo = await db.collection('todos').findOne({ _id: new ObjectId(id) });
     if (!existingTodo) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+      return NextResponse.json({ error: ERROR_MESSAGES.TODO_NOT_FOUND }, { status: 404 });
     }
     
     const updateData: any = { updatedAt: new Date() };
@@ -69,13 +70,13 @@ export async function PUT(
     );
     
     if (!result) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+      return NextResponse.json({ error: ERROR_MESSAGES.TODO_NOT_FOUND }, { status: 404 });
     }
 
     return NextResponse.json(decryptTodoResponse(result, existingTodo.sessionToken));
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }
 
@@ -96,12 +97,12 @@ export async function DELETE(
     const result = await db.collection('todos').deleteOne({ _id: new ObjectId(id) });
     
     if (result.deletedCount === 0) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+      return NextResponse.json({ error: ERROR_MESSAGES.TODO_NOT_FOUND }, { status: 404 });
     }
 
     return NextResponse.json({ message: 'Todo deleted successfully' });
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, { status: 500 });
   }
 }

@@ -1,44 +1,102 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { FilterType } from '@/types';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { FilterType, Todo, type TodoList } from '@/types';
 import TodoItem from './TodoItem';
-import { useTodoContext } from '@/contexts/TodoContext';
 
-export default function TodoList() {
-  const { 
-    todos, 
-    lists, 
-    completionFilter, 
-    listFilter, 
-    setCompletionFilter, 
-    setListFilter,
-    toggleTodo,
-    editTodo,
-    deleteTodo,
-    deleteList
-  } = useTodoContext();
+interface FilteredTodosData {
+  todos: Todo[];
+  pendingCount: number;
+  completedCount: number;
+  totalCount: number;
+}
+
+interface TodoListProps {
+  todos: Todo[];
+  lists: TodoList[];
+  completionFilter: FilterType;
+  listFilter: string;
+  onToggleTodo: (id: string) => Promise<void>;
+  onEditTodo: (id: string, text: string) => Promise<void>;
+  onDeleteTodo: (id: string) => Promise<void>;
+  onDeleteList: (listId: string) => Promise<void>;
+  onSetCompletionFilter: (filter: FilterType) => void;
+  onSetListFilter: (filter: string) => void;
+}
+
+export default function TodoList({
+  todos,
+  lists,
+  completionFilter,
+  listFilter,
+  onToggleTodo,
+  onEditTodo,
+  onDeleteTodo,
+  onDeleteList,
+  onSetCompletionFilter,
+  onSetListFilter
+}: TodoListProps) {
   
   const [isListDropdownOpen, setIsListDropdownOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const listDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter todos based on completion status and list
-  const filteredTodos = todos.filter(todo => {
-    const matchesCompletion = 
-      completionFilter === 'all' || 
-      (completionFilter === 'completed' && todo.completed) ||
-      (completionFilter === 'pending' && !todo.completed);
-    
-    const matchesList = listFilter === 'all' || todo.listId === listFilter;
-    
-    return matchesCompletion && matchesList;
-  });
+  /**
+   * Memoized filtered todos data with efficient filtering
+   */
+  const filteredData = useMemo((): FilteredTodosData => {
+    const filteredTodos = todos.filter(todo => {
+      const matchesCompletion = 
+        completionFilter === 'all' || 
+        (completionFilter === 'completed' && todo.completed) ||
+        (completionFilter === 'pending' && !todo.completed);
+      
+      const matchesList = listFilter === 'all' || todo.listId === listFilter;
+      
+      return matchesCompletion && matchesList;
+    });
 
-  const pendingCount = filteredTodos.filter(todo => !todo.completed).length;
-  const completedCount = filteredTodos.filter(todo => todo.completed).length;
+    return {
+      todos: filteredTodos,
+      pendingCount: filteredTodos.filter(todo => !todo.completed).length,
+      completedCount: filteredTodos.filter(todo => todo.completed).length,
+      totalCount: filteredTodos.length
+    };
+  }, [todos, completionFilter, listFilter]);
+
+  const { todos: filteredTodos, pendingCount, completedCount, totalCount } = filteredData;
   
-  const selectedList = lists.find(list => list.id === listFilter);
+  const selectedList = useMemo(
+    () => lists.find(list => list.id === listFilter),
+    [lists, listFilter]
+  );
+
+  const listTodosCount = useMemo(
+    () => todos.filter(todo => todo.listId === listFilter).length,
+    [todos, listFilter]
+  );
+
+  // Memoized event handlers
+  const handleDeleteList = useCallback(() => {
+    if (selectedList) {
+      onDeleteList(selectedList.id);
+      onSetListFilter('all');
+      setShowDeleteConfirm(false);
+    }
+  }, [selectedList, onDeleteList, onSetListFilter]);
+
+  const handleDropdownToggle = useCallback(() => {
+    setIsListDropdownOpen(prev => !prev);
+  }, []);
+
+  const handleFilterChange = useCallback((filter: FilterType) => {
+    onSetCompletionFilter(filter);
+  }, [onSetCompletionFilter]);
+
+  const handleListFilterChange = useCallback((listId: string) => {
+    onSetListFilter(listId);
+    setIsListDropdownOpen(false);
+  }, [onSetListFilter]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,21 +106,14 @@ export default function TodoList() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isListDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  const handleDeleteList = () => {
-    if (selectedList) {
-      deleteList(selectedList.id);
-      setListFilter('all');
-      setShowDeleteConfirm(false);
-    }
-  };
-
-  const listTodosCount = todos.filter(todo => todo.listId === listFilter).length;
+  }, [isListDropdownOpen]);
 
   return (
     <div 
@@ -86,7 +137,7 @@ export default function TodoList() {
             {(['all', 'pending', 'completed'] as FilterType[]).map((filter) => (
               <button
                 key={filter}
-                onClick={() => setCompletionFilter(filter)}
+                onClick={() => handleFilterChange(filter)}
                 className="px-2 sm:px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 capitalize flex-1"
                 style={{
                   backgroundColor: completionFilter === filter ? 'var(--bg-primary)' : 'transparent',
@@ -113,7 +164,7 @@ export default function TodoList() {
           <div className="relative flex-1 sm:flex-none" ref={listDropdownRef}>
             <button
               type="button"
-              onClick={() => setIsListDropdownOpen(!isListDropdownOpen)}
+              onClick={handleDropdownToggle}
               className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2 w-full sm:min-w-[120px] transition-colors duration-200"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
@@ -160,10 +211,7 @@ export default function TodoList() {
                 <div className="p-2 max-h-48 overflow-y-auto no-scrollbar-arrows">
                   <button
                     type="button"
-                    onClick={() => {
-                      setListFilter('all');
-                      setIsListDropdownOpen(false);
-                    }}
+                    onClick={() => handleListFilterChange('all')}
                     className="w-full flex items-center gap-3 p-2 text-left rounded-md transition-colors duration-200"
                     style={{
                       backgroundColor: listFilter === 'all' ? 'var(--bg-secondary)' : 'transparent',
@@ -188,10 +236,7 @@ export default function TodoList() {
                     <button
                       key={list.id}
                       type="button"
-                      onClick={() => {
-                        setListFilter(list.id);
-                        setIsListDropdownOpen(false);
-                      }}
+                      onClick={() => handleListFilterChange(list.id)}
                       className="w-full flex items-center gap-3 p-2 text-left rounded-md transition-colors duration-200"
                       style={{
                         backgroundColor: listFilter === list.id ? 'var(--bg-secondary)' : 'transparent',
@@ -245,9 +290,9 @@ export default function TodoList() {
                 key={todo.id}
                 todo={todo}
                 list={list}
-                onToggle={toggleTodo}
-                onEdit={editTodo}
-                onDelete={deleteTodo}
+                onToggle={onToggleTodo}
+                onEdit={onEditTodo}
+                onDelete={onDeleteTodo}
               />
             ) : null;
           })
@@ -255,7 +300,7 @@ export default function TodoList() {
       </div>
 
       {/* Footer summary */}
-      {filteredTodos.length > 0 && (
+      {totalCount > 0 && (
         <div 
           className="mt-6 pt-4 border-t text-sm text-center"
           style={{ 
@@ -263,7 +308,7 @@ export default function TodoList() {
             color: 'var(--text-secondary)' 
           }}
         >
-          Showing {filteredTodos.length} of {todos.length} tasks
+          Showing {totalCount} of {todos.length} tasks
         </div>
       )}
 

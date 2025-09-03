@@ -1,5 +1,6 @@
-import { MongoClient, Db, ObjectId } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 import config from './config';
+import { ERROR_MESSAGES } from './constants';
 
 class MongoDB {
   private client: MongoClient | null = null;
@@ -19,7 +20,7 @@ class MongoDB {
       
       return this.db;
     } catch (error) {
-      console.error('MongoDB connection failed:', error);
+      console.error(ERROR_MESSAGES.MONGODB_CONNECTION_FAILED, error);
       throw error;
     }
   }
@@ -32,28 +33,6 @@ class MongoDB {
     await this.db.collection('lists').createIndex({ sessionToken: 1 });
   }
 
-  async disconnect(): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.db = null;
-    }
-  }
-
-  getDb(): Db {
-    if (!this.db) {
-      throw new Error('Database not connected. Call connect() first.');
-    }
-    return this.db;
-  }
-
-  static createObjectId(id?: string): ObjectId {
-    return id ? new ObjectId(id) : new ObjectId();
-  }
-
-  static isValidObjectId(id: string): boolean {
-    return ObjectId.isValid(id);
-  }
 }
 
 const mongodb = new MongoDB();

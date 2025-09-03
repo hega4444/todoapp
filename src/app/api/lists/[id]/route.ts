@@ -3,6 +3,17 @@ import mongodb from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 /**
+ * Get session token from Authorization header
+ */
+function getSessionTokenFromHeader(request: NextRequest): string {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return 'default';
+}
+
+/**
  * Delete a list and all its associated todos
  */
 export async function DELETE(
@@ -17,14 +28,13 @@ export async function DELETE(
     }
 
     const db = await mongodb.connect();
-    const url = new URL(request.url);
-    const sessionToken = url.searchParams.get('sessionToken') || 'default';
+    const sessionToken = getSessionTokenFromHeader(request);
     
     // Delete all todos in this list first
     await db.collection('todos').deleteMany({ listId: id, sessionToken });
     
     // Build query for list deletion
-    const query: any = { sessionToken };
+    const query: { sessionToken: string; _id?: ObjectId; id?: string } = { sessionToken };
     if (ObjectId.isValid(id)) {
       query._id = new ObjectId(id);
     } else {
