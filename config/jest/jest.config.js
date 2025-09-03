@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
 })
 
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/config/jest/jest.setup.js'],
   testEnvironment: 'jsdom',
   testMatch: [
     '**/__tests__/**/*.(ts|tsx|js)',
@@ -19,6 +19,9 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(mongodb|bson)/)', 
+  ],
 }
 
 module.exports = createJestConfig(customJestConfig)
