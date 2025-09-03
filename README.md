@@ -85,24 +85,7 @@ git clone <your-repo-url>
 cd todoapp
 ```
 
-2. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
-
-3. Update `.env.local` for Docker setup:
-```bash
-MONGODB_URI=mongodb://mongo:27017/todoapp
-MONGODB_DB=todoapp_dev
-ENCRYPTION_MASTER_KEY=your_256_bit_hex_key_here_64_characters_minimum
-```
-
-4. Generate an encryption key:
-```bash
-openssl rand -hex 32
-```
-
-5. Start the entire stack:
+2. Start the entire stack:
 ```bash
 docker compose up --build
 ```
