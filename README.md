@@ -85,19 +85,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - `pnpm test` - Run tests
 - `pnpm test:watch` - Run tests in watch mode
 
-## Project Structure
-
-```
-src/
-├── app/                 # Next.js app router
-│   ├── api/            # API routes
-│   └── page.tsx        # Main application page
-├── components/         # React components
-├── contexts/           # React contexts
-├── lib/               # Utilities and configurations
-└── types/             # TypeScript type definitions
-```
-
 ## Security
 
 - All todo data is encrypted using AES-256 encryption
