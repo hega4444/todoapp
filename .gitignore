@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# swc
+.swc/
+
 # production
 /build
 
@@ -30,8 +33,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ignore local env files
+.env.local
+.env.*.local
 
 # vercel
 .vercel
@@ -40,7 +44,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Cloude config
+# Claude config
 .claude
 CLAUDE.md
 

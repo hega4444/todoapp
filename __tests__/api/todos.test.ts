@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { NextRequest } from 'next/server'
 import { GET, POST } from '@/app/api/todos/route'
 import mongodb from '@/lib/mongodb'

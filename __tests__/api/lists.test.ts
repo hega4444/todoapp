@@ -1,8 +1,6 @@
 /**
  * @jest-environment node
  */
-
-
 import { NextRequest } from 'next/server'
 import { GET, POST } from '@/app/api/lists/route'
 import mongodb from '@/lib/mongodb'
@@ -64,13 +62,13 @@ describe('/api/lists', () => {
         id: 'list1',
         name: 'Work Tasks',
         color: '#3b82f6',
-        createdAt: mockLists[0].createdAt
+        createdAt: mockLists[0].createdAt.toISOString()
       })
       expect(data[1]).toEqual({
         id: 'list2',
         name: 'Personal',
         color: '#ef4444',
-        createdAt: mockLists[1].createdAt
+        createdAt: mockLists[1].createdAt.toISOString()
       })
     })
 
@@ -127,7 +125,8 @@ describe('/api/lists', () => {
       expect(data.name).toBe('Shopping List')
       expect(data.color).toBe('#10b981')
       expect(data.id).toBe('new_list_id')
-      expect(data.createdAt).toBeInstanceOf(Date)
+      expect(typeof data.createdAt).toBe('string')
+      expect(new Date(data.createdAt)).toBeInstanceOf(Date)
 
       expect(mockCollection.insertOne).toHaveBeenCalledWith({
         name: 'Shopping List',

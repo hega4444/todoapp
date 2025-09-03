@@ -7,6 +7,8 @@ global.fetch = jest.fn()
 describe('ApiService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Reset the session token cache for each test
+    ;(apiService as any).sessionToken = null
   })
 
   describe('getSessionToken', () => {
@@ -16,7 +18,7 @@ describe('ApiService', () => {
       const token = await apiService.getSessionToken()
       
       expect(token).toBe('test-token-123')
-      expect(global.fetch).toHaveBeenCalledWith('/api/session')
+      expect(global.fetch).toHaveBeenCalledWith('/api/session', undefined)
     })
 
     it('returns cached session token on subsequent calls', async () => {

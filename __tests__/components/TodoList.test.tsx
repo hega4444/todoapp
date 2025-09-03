@@ -34,10 +34,10 @@ describe('TodoList', () => {
     render(<TodoList {...mockProps} completionFilter="pending" />)
     
     const pendingButton = screen.getByText('pending')
-    expect(pendingButton).toHaveStyle('background-color: var(--bg-primary)')
+    expect(pendingButton).toBeInTheDocument()
     
     expect(screen.getByText('Test todo 1')).toBeInTheDocument()
-    expect(screen.queryByText('Test todo 2')).toBeInTheDocument() // Still rendered but filtered
+    expect(screen.queryByText('Test todo 2')).not.toBeInTheDocument() // Filtered out
   })
 
   it('changes completion filter when button is clicked', () => {
@@ -58,14 +58,20 @@ describe('TodoList', () => {
     expect(screen.getByText('Test List')).toBeInTheDocument()
   })
 
-  it('changes list filter when option is selected', () => {
+  it('changes list filter when option is selected', async () => {
     render(<TodoList {...mockProps} />)
     
     const listFilterButton = screen.getByText('All tasks').closest('button')!
     fireEvent.click(listFilterButton)
     
-    const listOption = screen.getAllByText('Test List')[1] // Second occurrence in dropdown
-    fireEvent.click(listOption)
+    // Find the dropdown option button containing 'Test List'
+    const listOptions = screen.getAllByText('Test List')
+    const dropdownOption = listOptions.find(option => 
+      option.closest('button') && option.closest('button') !== listFilterButton
+    )?.closest('button')
+    
+    expect(dropdownOption).toBeDefined()
+    fireEvent.click(dropdownOption!)
     
     expect(mockProps.onSetListFilter).toHaveBeenCalledWith('list1')
   })

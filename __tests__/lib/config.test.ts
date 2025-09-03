@@ -4,6 +4,7 @@ describe('Config', () => {
   const originalEnv = process.env
 
   beforeEach(() => {
+    jest.resetModules()
     process.env = { ...originalEnv }
   })
 
@@ -16,8 +17,6 @@ describe('Config', () => {
       process.env.MONGODB_URI = 'mongodb://test-server:27017'
       process.env.MONGODB_DB = 'test-db'
 
-      // Clear require cache to reload config
-      delete require.cache[require.resolve('@/lib/config')]
       const freshConfig = require('@/lib/config').default
 
       expect(freshConfig.database.connectionString).toBe('mongodb://test-server:27017')
@@ -28,8 +27,6 @@ describe('Config', () => {
       delete process.env.MONGODB_URI
       delete process.env.MONGODB_DB
 
-      // Clear require cache to reload config
-      delete require.cache[require.resolve('@/lib/config')]
       const freshConfig = require('@/lib/config').default
 
       expect(freshConfig.database.connectionString).toBe('mongodb://localhost:27017')
@@ -41,7 +38,6 @@ describe('Config', () => {
     it('detects development environment', () => {
       process.env.NODE_ENV = 'development'
 
-      delete require.cache[require.resolve('@/lib/config')]
       const freshConfig = require('@/lib/config').default
 
       expect(freshConfig.isDevelopment).toBe(true)
@@ -51,7 +47,6 @@ describe('Config', () => {
     it('detects production environment', () => {
       process.env.NODE_ENV = 'production'
 
-      delete require.cache[require.resolve('@/lib/config')]
       const freshConfig = require('@/lib/config').default
 
       expect(freshConfig.isDevelopment).toBe(false)
@@ -61,7 +56,6 @@ describe('Config', () => {
     it('defaults to development when NODE_ENV is not set', () => {
       delete process.env.NODE_ENV
 
-      delete require.cache[require.resolve('@/lib/config')]
       const freshConfig = require('@/lib/config').default
 
       expect(freshConfig.isDevelopment).toBe(true)

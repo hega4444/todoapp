@@ -5,8 +5,8 @@ import { mockLists } from '../mocks/api'
 const mockProps = {
   lists: mockLists,
   selectedListId: 'list1',
-  onAddTodo: jest.fn(),
-  onCreateList: jest.fn(),
+  onAddTodo: jest.fn().mockResolvedValue(undefined),
+  onCreateList: jest.fn().mockResolvedValue(undefined),
   onSelectList: jest.fn()
 }
 
@@ -57,12 +57,12 @@ describe('AddTodo', () => {
     expect(screen.getByText('Create new list')).toBeInTheDocument()
   })
 
-  it('changes selected list when dropdown option is clicked', () => {
+  it('changes selected list when dropdown option is clicked', async () => {
     const multipleListsProps = {
       ...mockProps,
       lists: [
         ...mockLists,
-        { _id: 'list2', name: 'Second List', color: '#ef4444', createdAt: new Date(), updatedAt: new Date() }
+        { id: 'list2', name: 'Second List', color: '#ef4444', createdAt: new Date('2024-01-02') }
       ]
     }
     
@@ -70,6 +70,10 @@ describe('AddTodo', () => {
     
     const listButton = screen.getByText('Test List').closest('button')!
     fireEvent.click(listButton)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Second List')).toBeInTheDocument()
+    })
     
     const secondListOption = screen.getByText('Second List')
     fireEvent.click(secondListOption)
@@ -133,7 +137,10 @@ describe('AddTodo', () => {
     
     const input = screen.getByPlaceholderText('What needs to be done? ...')
     fireEvent.change(input, { target: { value: 'Todo via Enter' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
+    
+    // Submit the form (Enter key triggers form submission)
+    const form = input.closest('form')!
+    fireEvent.submit(form)
     
     await waitFor(() => {
       expect(mockProps.onAddTodo).toHaveBeenCalledWith('Todo via Enter', 'list1')

@@ -8,7 +8,11 @@ interface AppConfig {
   database: DatabaseConfig;
   environment: 'development' | 'staging' | 'production';
   port: number;
+  isDevelopment: boolean;
+  isProduction: boolean;
 }
+
+const environment = (process.env.NODE_ENV as 'development' | 'staging' | 'production') || 'development';
 
 const config: AppConfig = {
   database: {
@@ -16,8 +20,10 @@ const config: AppConfig = {
     databaseName: process.env.MONGODB_DB || 'todoapp',
     port: process.env.MONGODB_PORT ? parseInt(process.env.MONGODB_PORT) : undefined
   },
-  environment: (process.env.NODE_ENV as 'development' | 'staging' | 'production') || 'development',
-  port: parseInt(process.env.PORT || '3000', 10)
+  environment,
+  port: parseInt(process.env.PORT || '3000', 10),
+  isDevelopment: environment === 'development',
+  isProduction: environment === 'production'
 };
 
 export default config;

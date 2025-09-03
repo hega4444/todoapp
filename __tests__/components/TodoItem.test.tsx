@@ -33,8 +33,9 @@ describe('TodoItem', () => {
   it('calls onToggle when checkbox is clicked', () => {
     render(<TodoItem {...mockProps} />)
     
-    const checkbox = screen.getByRole('button').closest('button')
-    fireEvent.click(checkbox!)
+    const buttons = screen.getAllByRole('button')
+    const checkbox = buttons[0] // First button is the checkbox
+    fireEvent.click(checkbox)
     
     expect(mockProps.onToggle).toHaveBeenCalledWith('1')
   })

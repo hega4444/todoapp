@@ -63,3 +63,16 @@ export const themes = {
 
 export type Theme = typeof themes.light;
 export type ThemeName = keyof typeof themes;
+
+export function getSystemTheme(): ThemeName {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+}
+
+export function applyTheme(theme: ThemeName): void {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
