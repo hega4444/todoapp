@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
-import { DEFAULT_LISTS, ERROR_MESSAGES } from '@/lib/constants';
+import { DEFAULT_LISTS } from '@/lib/constants';
 
 /**
  * Create default lists for new users
