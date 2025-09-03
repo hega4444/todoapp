@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { EncryptionService } from '@/lib/encryption';
 
+
 const COOKIE_OPTIONS = {
   maxAge: 30 * 24 * 60 * 60, // 30 days
   httpOnly: true,

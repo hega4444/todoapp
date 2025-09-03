@@ -6,7 +6,7 @@ import TodoListComponent from '@/components/TodoList';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ConnectionBadge } from '@/components/ConnectionBadge';
-import { Todo, TodoList, FilterType, AppError } from '@/types';
+import { Todo, TodoList, FilterType } from '@/types';
 
 type ConnectionStatus = 'online' | 'offline' | 'error';
 import { apiService } from '@/lib/api';
