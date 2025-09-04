@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AddTodo from '@/components/AddTodo';
 import TodoListComponent from '@/components/TodoList';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -21,6 +21,7 @@ function TodoApp() {
   const [selectedListId, setSelectedListId] = useState<string>(
     DEFAULT_LISTS[0].id
   );
+
   const [completionFilter, setCompletionFilter] = useState<FilterType>('all');
   const [listFilter, setListFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -60,24 +61,23 @@ function TodoApp() {
     });
   }, [setOnline, setConnectionError, setOffline]);
 
+
   const loadData = useCallback(
     async (showLoader: boolean = true) => {
       try {
         if (showLoader) {
           setLoading(true);
         }
-
         const data = await apiService.getTodosAndLists();
         setTodos(data.todos);
         setLists(data.lists);
-
-        // Update selected list if it doesn't exist in new lists
-        if (
-          data.lists.length > 0 &&
-          !data.lists.find((l) => l.id === selectedListId)
-        ) {
-          setSelectedListId(data.lists[0].id);
-        }
+        
+        setSelectedListId(currentId => {
+          if (data.lists.length > 0 && !data.lists.find(l => l.id === currentId)) {
+            return data.lists[0].id;
+          }
+          return currentId;
+        });
       } catch (error) {
         console.error(ERROR_MESSAGES.ERROR_LOADING_DATA, error);
       } finally {
@@ -86,7 +86,7 @@ function TodoApp() {
         }
       }
     },
-    [selectedListId]
+    []
   );
 
   const loadFromLocalStorage = useCallback(() => {
@@ -256,20 +256,33 @@ function TodoApp() {
       try {
         // Optimistically update UI first
         const newLists = lists.filter((list) => list.id !== listId);
+        
+        // Determine new selection before updating state
+        let newSelectedListId = selectedListId;
+        if (isCurrentlySelected) {
+          if (newLists.length > 0) {
+            const personalList = newLists.find((list) => list.id === 'personal');
+            const fallbackList =
+              personalList ||
+              newLists.sort(
+                (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+              )[0];
+            newSelectedListId = fallbackList.id;
+          } else {
+            newSelectedListId = '';
+          }
+        }
+
+        // Update all state together to prevent race conditions
         setLists(newLists);
         setTodos((prev) => prev.filter((todo) => todo.listId !== listId));
-
-        // Update selected list if needed
-        if (isCurrentlySelected && newLists.length > 0) {
-          const personalList = newLists.find((list) => list.id === 'personal');
-          const fallbackList =
-            personalList ||
-            newLists.sort(
-              (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-            )[0];
-          setSelectedListId(fallbackList.id);
-        } else if (newLists.length === 0) {
-          setSelectedListId('');
+        if (newSelectedListId !== selectedListId) {
+          setSelectedListId(newSelectedListId);
+        }
+        
+        // If user was viewing the deleted list, switch to 'all' to avoid showing stale data
+        if (listFilter === listId) {
+          setListFilter('all');
         }
 
         // Delete from database
