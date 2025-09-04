@@ -9,6 +9,8 @@ describe('ApiService', () => {
     jest.clearAllMocks()
     // Reset the session token cache for each test
     ;(apiService as any).sessionToken = null
+    // Mock console.warn to suppress session token warnings in tests
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   describe('getSessionToken', () => {

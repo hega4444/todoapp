@@ -1,10 +1,10 @@
-import { 
-  Todo, 
-  TodoList, 
-  ConnectionStatusCallback, 
+import {
+  Todo,
+  TodoList,
+  ConnectionStatusCallback,
   GetTodosAndListsResponse,
   AppError,
-  DEFAULT_SESSION_TOKEN 
+  DEFAULT_SESSION_TOKEN,
 } from '@/types';
 import { API_ENDPOINTS, ERROR_MESSAGES } from './constants';
 
@@ -24,16 +24,19 @@ class ApiService {
     this.connectionCallback = callback;
   }
 
-  private async handleFetch(url: string, options?: RequestInit): Promise<Response> {
+  private async handleFetch(
+    url: string,
+    options?: RequestInit
+  ): Promise<Response> {
     try {
       const response = await fetch(url, options);
-      
+
       if (response.ok) {
         this.connectionCallback?.setOnline();
       } else if (response.status >= 500) {
         this.connectionCallback?.setError();
       }
-      
+
       return response;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -56,7 +59,7 @@ class ApiService {
       }
       throw new AppError(errorMessage, response.status.toString());
     }
-    
+
     return response.json() as Promise<T>;
   }
 
@@ -78,25 +81,30 @@ class ApiService {
     const sessionToken = await this.getSessionToken();
     const response = await this.handleFetch(API_ENDPOINTS.TODOS, {
       headers: {
-        'Authorization': `Bearer ${sessionToken}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${sessionToken}`,
+        'Content-Type': 'application/json',
+      },
     });
     const data = await this.handleApiResponse<{
-      todos: Array<Omit<Todo, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string }>;
+      todos: Array<
+        Omit<Todo, 'createdAt' | 'updatedAt'> & {
+          createdAt: string;
+          updatedAt: string;
+        }
+      >;
       lists: Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>;
     }>(response);
-    
+
     return {
       todos: data.todos.map((todo) => ({
         ...todo,
         createdAt: new Date(todo.createdAt),
-        updatedAt: new Date(todo.updatedAt)
+        updatedAt: new Date(todo.updatedAt),
       })),
       lists: data.lists.map((list) => ({
         ...list,
-        createdAt: new Date(list.createdAt)
-      }))
+        createdAt: new Date(list.createdAt),
+      })),
     };
   }
 
@@ -104,49 +112,58 @@ class ApiService {
     const sessionToken = await this.getSessionToken();
     const response = await this.handleFetch(API_ENDPOINTS.TODOS, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionToken}`
+        Authorization: `Bearer ${sessionToken}`,
       },
-      body: JSON.stringify({ text, listId })
+      body: JSON.stringify({ text, listId }),
     });
-    
+
     const data = await this.handleApiResponse<
-      Omit<Todo, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string }
+      Omit<Todo, 'createdAt' | 'updatedAt'> & {
+        createdAt: string;
+        updatedAt: string;
+      }
     >(response);
-    
+
     return {
       ...data,
       createdAt: new Date(data.createdAt),
-      updatedAt: new Date(data.updatedAt)
+      updatedAt: new Date(data.updatedAt),
     };
   }
 
-  async updateTodo(id: string, updates: Partial<Pick<Todo, 'text' | 'completed'>>): Promise<Todo> {
+  async updateTodo(
+    id: string,
+    updates: Partial<Pick<Todo, 'text' | 'completed'>>
+  ): Promise<Todo> {
     const response = await this.handleFetch(`${API_ENDPOINTS.TODOS}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     });
-    
+
     return this.handleApiResponse<Todo>(response);
   }
 
   async deleteTodo(id: string): Promise<void> {
     const response = await this.handleFetch(`${API_ENDPOINTS.TODOS}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
-    
+
     await this.handleApiResponse<{ success: boolean }>(response);
   }
 
   async getLists(): Promise<TodoList[]> {
     const response = await this.handleFetch(API_ENDPOINTS.LISTS);
-    const data = await this.handleApiResponse<Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>>(response);
-    
+    const data =
+      await this.handleApiResponse<
+        Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>
+      >(response);
+
     return data.map((list) => ({
       ...list,
-      createdAt: new Date(list.createdAt)
+      createdAt: new Date(list.createdAt),
     }));
   }
 
@@ -154,20 +171,20 @@ class ApiService {
     const sessionToken = await this.getSessionToken();
     const response = await this.handleFetch(API_ENDPOINTS.LISTS, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionToken}`
+        Authorization: `Bearer ${sessionToken}`,
       },
-      body: JSON.stringify({ name, color })
+      body: JSON.stringify({ name, color }),
     });
-    
+
     const data = await this.handleApiResponse<
       Omit<TodoList, 'createdAt'> & { createdAt: string }
     >(response);
-    
+
     return {
       ...data,
-      createdAt: new Date(data.createdAt)
+      createdAt: new Date(data.createdAt),
     };
   }
 
@@ -176,10 +193,10 @@ class ApiService {
     const response = await this.handleFetch(`${API_ENDPOINTS.LISTS}/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${sessionToken}`
-      }
+        Authorization: `Bearer ${sessionToken}`,
+      },
     });
-    
+
     await this.handleApiResponse<{ success: boolean }>(response);
   }
 }

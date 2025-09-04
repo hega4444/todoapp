@@ -5,12 +5,17 @@ import { TodoListDocument } from '@/types';
 /**
  * Format list for client response
  */
-function formatList(list: any): { id: string; name: string; color: string; createdAt: Date } {
-  return { 
-    id: list._id?.toString() || list.id || '', 
-    name: list.name, 
-    color: list.color, 
-    createdAt: list.createdAt 
+function formatList(list: any): {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: Date;
+} {
+  return {
+    id: list._id?.toString() || list.id || '',
+    name: list.name,
+    color: list.color,
+    createdAt: list.createdAt,
   };
 }
 
@@ -32,12 +37,15 @@ export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     const lists = await db.collection('lists').find({ sessionToken }).toArray();
     return NextResponse.json(lists.map(formatList));
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -57,22 +65,28 @@ export async function POST(request: NextRequest) {
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     const newList: Omit<TodoListDocument, '_id'> = {
       name: name.trim(),
       color: color.trim(),
       createdAt: new Date(),
-      sessionToken
+      sessionToken,
     };
 
     const result = await db.collection('lists').insertOne(newList);
 
-    return NextResponse.json({
-      ...newList,
-      id: result.insertedId.toString()
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        ...newList,
+        id: result.insertedId.toString(),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

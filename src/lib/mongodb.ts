@@ -20,9 +20,9 @@ class MongoDB {
       });
       await this.client.connect();
       this.db = this.client.db(config.database.databaseName);
-      
+
       await this.ensureIndexes();
-      
+
       return this.db;
     } catch (error) {
       console.error(ERROR_MESSAGES.MONGODB_CONNECTION_FAILED, error);
@@ -37,7 +37,6 @@ class MongoDB {
     await this.db.collection('todos').createIndex({ listId: 1 });
     await this.db.collection('lists').createIndex({ sessionToken: 1 });
   }
-
 }
 
 const mongodb = new MongoDB();

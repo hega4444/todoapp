@@ -29,7 +29,7 @@ export const themes = {
       success: 'var(--status-success)',
       error: 'var(--status-error)',
       warning: 'var(--status-warning)',
-    }
+    },
   },
   dark: {
     // Same structure as light theme
@@ -57,8 +57,8 @@ export const themes = {
       success: 'var(--status-success)',
       error: 'var(--status-error)',
       warning: 'var(--status-warning)',
-    }
-  }
+    },
+  },
 } as const;
 
 export type Theme = typeof themes.light;
@@ -66,7 +66,9 @@ export type ThemeName = keyof typeof themes;
 
 export function getSystemTheme(): ThemeName {
   if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   }
   return 'light';
 }

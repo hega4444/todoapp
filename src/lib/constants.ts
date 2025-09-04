@@ -21,7 +21,7 @@ export const ERROR_MESSAGES = {
   DELETE_LIST_FAILED: 'Failed to delete list',
   EDIT_TODO_FAILED: 'Failed to edit todo',
   SESSION_TOKEN_FAILED: 'Failed to get session token, using default',
-  
+
   // Console error messages
   ERROR_LOADING_DATA: 'Error loading data from server:',
   ERROR_LOADING_CACHE: 'Error loading cached data:',
@@ -31,7 +31,7 @@ export const ERROR_MESSAGES = {
   ERROR_DELETING_TODO: 'Error deleting todo:',
   ERROR_CREATING_LIST: 'Error creating list:',
   ERROR_DELETING_LIST: 'Error deleting list:',
-  
+
   // API error messages
   INTERNAL_SERVER_ERROR: 'Internal server error',
   TODO_NOT_FOUND: 'Todo not found',
@@ -44,7 +44,7 @@ export const ERROR_MESSAGES = {
 // Color Palette for Lists (matches exactly with AddTodo COLORS)
 export const LIST_COLORS = [
   '#3B82F6', // Blue
-  '#EF4444', // Red  
+  '#EF4444', // Red
   '#10B981', // Green
   '#F59E0B', // Yellow
   '#8B5CF6', // Purple
@@ -57,5 +57,8 @@ export const LIST_COLORS = [
 export const DEFAULT_LISTS = [
   { id: 'personal', name: 'Personal', color: '#3B82F6', createdAt: new Date() },
   { id: 'work', name: 'Work', color: '#EF4444', createdAt: new Date() },
-  { id: 'shopping', name: 'Shopping', color: '#10B981', createdAt: new Date() }
+  { id: 'shopping', name: 'Shopping', color: '#10B981', createdAt: new Date() },
 ];
+
+// Timer for ConnectionBadge messages
+export const CONNECTION_BADGE_TIMER = 5000;

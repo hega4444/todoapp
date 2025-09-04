@@ -66,12 +66,16 @@ export class AppError extends Error {
   public code?: string;
   public details?: Record<string, unknown>;
 
-  constructor(message: string, code?: string, details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code?: string,
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'AppError';
     this.code = code;
     this.details = details;
-    
+
     // Maintains proper stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
@@ -84,7 +88,7 @@ export const DEFAULT_SESSION_TOKEN = 'default' as const;
 
 export const CONNECTION_STATUS = {
   ONLINE: 'online',
-  OFFLINE: 'offline', 
+  OFFLINE: 'offline',
   ERROR: 'error',
 } as const;
 

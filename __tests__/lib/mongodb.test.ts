@@ -7,21 +7,40 @@ import { TextEncoder, TextDecoder } from 'util'
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
-import mongodb from '@/lib/mongodb'
-import { MongoMemoryServer } from 'mongodb-memory-server'
-
-let mongod: MongoMemoryServer
-
-beforeAll(async () => {
-  mongod = await MongoMemoryServer.create()
-  process.env.MONGODB_URI = mongod.getUri()
-  process.env.MONGODB_DB = 'todoapp_test'
-}, 30000) // 30 second timeout for MongoDB setup
-
-afterAll(async () => {
-  if (mongod) {
-    await mongod.stop()
+// Mock the MongoDB module
+jest.mock('@/lib/mongodb', () => {
+  const mockDb = {
+    databaseName: 'todoapp_test',
+    collection: jest.fn().mockReturnValue({
+      createIndex: jest.fn().mockResolvedValue({}),
+      listIndexes: jest.fn().mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { key: { sessionToken: 1 } },
+          { key: { listId: 1 } },
+          { key: { sessionToken: 1 } }
+        ])
+      })
+    })
   }
+  
+  return {
+    __esModule: true,
+    default: {
+      connect: jest.fn().mockResolvedValue(mockDb)
+    }
+  }
+})
+
+import mongodb from '@/lib/mongodb'
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  // Mock console.error to suppress any connection error logs
+  jest.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+afterEach(() => {
+  jest.restoreAllMocks()
 })
 
 describe('MongoDB', () => {

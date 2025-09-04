@@ -25,7 +25,9 @@ export class EncryptionService {
       throw new Error('ENCRYPTION_MASTER_KEY environment variable is required');
     }
     if (masterKey.length < 64) {
-      throw new Error('ENCRYPTION_MASTER_KEY must be at least 64 characters (256 bits)');
+      throw new Error(
+        'ENCRYPTION_MASTER_KEY must be at least 64 characters (256 bits)'
+      );
     }
     return masterKey;
   }
@@ -36,10 +38,10 @@ export class EncryptionService {
   private static deriveEncryptionKey(sessionToken: string): Buffer {
     const masterKey = this.getMasterKey();
     return crypto.pbkdf2Sync(
-      masterKey + sessionToken, 
-      this.SALT, 
-      this.PBKDF2_ITERATIONS, 
-      32, 
+      masterKey + sessionToken,
+      this.SALT,
+      this.PBKDF2_ITERATIONS,
+      32,
       'sha256'
     );
   }
@@ -52,10 +54,10 @@ export class EncryptionService {
     const key = this.deriveEncryptionKey(sessionToken);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv);
-    
+
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     return iv.toString('hex') + ':' + encrypted;
   }
 
@@ -71,7 +73,7 @@ export class EncryptionService {
     const iv = Buffer.from(parts[0], 'hex');
     const encrypted = parts[1];
     const key = this.deriveEncryptionKey(sessionToken);
-    
+
     const decipher = crypto.createDecipheriv(this.ALGORITHM, key, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
@@ -84,8 +86,10 @@ export class EncryptionService {
    */
   static isEncrypted(text: string): boolean {
     const parts = text.split(':');
-    return parts.length === 2 && 
-           parts.every(part => /^[0-9a-fA-F]+$/.test(part)) &&
-           parts[0].length === 32; // IV should be 16 bytes = 32 hex chars
+    return (
+      parts.length === 2 &&
+      parts.every((part) => /^[0-9a-fA-F]+$/.test(part)) &&
+      parts[0].length === 32
+    ); // IV should be 16 bytes = 32 hex chars
   }
 }
