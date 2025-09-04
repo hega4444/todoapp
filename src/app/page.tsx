@@ -163,7 +163,7 @@ function TodoApp() {
         console.error(ERROR_MESSAGES.ERROR_ADDING_TODO, error);
       }
     },
-    [todos]
+    [listFilter]
   );
 
   const toggleTodo = useCallback(
