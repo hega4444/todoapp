@@ -104,27 +104,29 @@ export default function TodoList({
     [onSetListFilter]
   );
 
-
   // Auto-scroll to bottom when new items are added
   useEffect(() => {
     if (todoContainerRef.current) {
       const container = todoContainerRef.current;
-      const hasContainerOverflow = container.scrollHeight > container.clientHeight;
-      
+      const hasContainerOverflow =
+        container.scrollHeight > container.clientHeight;
+
       if (hasContainerOverflow) {
         // Desktop: scroll the container
-        const isAtBottom = container.scrollTop >= container.scrollHeight - container.clientHeight - 10;
+        const isAtBottom =
+          container.scrollTop >=
+          container.scrollHeight - container.clientHeight - 10;
         if (isAtBottom || todos.length > 0) {
           container.scrollTo({
             top: container.scrollHeight,
-            behavior: 'smooth'
+            behavior: 'smooth',
           });
         }
       } else {
         // Mobile: scroll the page since container doesn't overflow
         window.scrollTo({
           top: document.documentElement.scrollHeight,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }
@@ -172,7 +174,7 @@ export default function TodoList({
       </div>
 
       {/* Todo items */}
-      <div 
+      <div
         ref={todoContainerRef}
         className="space-y-2 md:max-h-96 md:overflow-y-auto md:pr-2 md:scroll-smooth scrollbar-no-arrows"
       >

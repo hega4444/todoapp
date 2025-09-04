@@ -26,9 +26,7 @@ export default function CompletionFilter({
           className="px-2 sm:px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 capitalize flex-1"
           style={{
             backgroundColor:
-              completionFilter === filter
-                ? 'var(--bg-primary)'
-                : 'transparent',
+              completionFilter === filter ? 'var(--bg-primary)' : 'transparent',
             color:
               completionFilter === filter
                 ? 'var(--text-primary)'

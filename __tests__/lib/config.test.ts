@@ -1,5 +1,3 @@
-import config from '@/lib/config'
-
 describe('Config', () => {
   const originalEnv = process.env
 
@@ -36,7 +34,7 @@ describe('Config', () => {
 
   describe('environment detection', () => {
     it('detects development environment', () => {
-      process.env.NODE_ENV = 'development'
+      ;(process.env as any).NODE_ENV = 'development'
 
       const freshConfig = require('@/lib/config').default
 
@@ -45,7 +43,7 @@ describe('Config', () => {
     })
 
     it('detects production environment', () => {
-      process.env.NODE_ENV = 'production'
+      ;(process.env as any).NODE_ENV = 'production'
 
       const freshConfig = require('@/lib/config').default
 
@@ -54,7 +52,7 @@ describe('Config', () => {
     })
 
     it('defaults to development when NODE_ENV is not set', () => {
-      delete process.env.NODE_ENV
+      delete (process.env as any).NODE_ENV
 
       const freshConfig = require('@/lib/config').default
 

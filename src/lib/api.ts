@@ -154,19 +154,6 @@ class ApiService {
     await this.handleApiResponse<{ success: boolean }>(response);
   }
 
-  async getLists(): Promise<TodoList[]> {
-    const response = await this.handleFetch(API_ENDPOINTS.LISTS);
-    const data =
-      await this.handleApiResponse<
-        Array<Omit<TodoList, 'createdAt'> & { createdAt: string }>
-      >(response);
-
-    return data.map((list) => ({
-      ...list,
-      createdAt: new Date(list.createdAt),
-    }));
-  }
-
   async createList(name: string, color: string): Promise<TodoList> {
     const sessionToken = await this.getSessionToken();
     const response = await this.handleFetch(API_ENDPOINTS.LISTS, {

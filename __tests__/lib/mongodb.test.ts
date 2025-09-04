@@ -4,8 +4,8 @@
 import { TextEncoder, TextDecoder } from 'util'
 
 // Add TextEncoder/TextDecoder for Node environment
-global.TextEncoder = TextEncoder
-global.TextDecoder = TextDecoder
+;(global as any).TextEncoder = TextEncoder as any
+;(global as any).TextDecoder = TextDecoder as any
 
 // Mock the MongoDB module
 jest.mock('@/lib/mongodb', () => {

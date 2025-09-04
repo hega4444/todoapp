@@ -91,9 +91,3 @@ export const CONNECTION_STATUS = {
   OFFLINE: 'offline',
   ERROR: 'error',
 } as const;
-
-export const FILTER_TYPES = {
-  ALL: 'all',
-  PENDING: 'pending',
-  COMPLETED: 'completed',
-} as const;

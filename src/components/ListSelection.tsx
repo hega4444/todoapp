@@ -121,9 +121,7 @@ export default function ListSelection({
               className="w-full flex items-center gap-3 p-2 text-left rounded-md transition-colors duration-200"
               style={{
                 backgroundColor:
-                  listFilter === 'all'
-                    ? 'var(--bg-secondary)'
-                    : 'transparent',
+                  listFilter === 'all' ? 'var(--bg-secondary)' : 'transparent',
                 color:
                   listFilter === 'all'
                     ? 'var(--interactive-primary)'
@@ -131,8 +129,7 @@ export default function ListSelection({
               }}
               onMouseEnter={(e) => {
                 if (listFilter !== 'all') {
-                  e.currentTarget.style.backgroundColor =
-                    'var(--bg-secondary)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
                 }
               }}
               onMouseLeave={(e) => {

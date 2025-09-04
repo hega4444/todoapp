@@ -41,7 +41,6 @@ function TodoApp() {
   }, []);
 
   // Reset connection health after 5 seconds
-  //
   useEffect(() => {
     if (connectionStatus === 'error') {
       const timer = setTimeout(() => {
@@ -150,15 +149,14 @@ function TodoApp() {
   // Todo actions
   const addTodo = useCallback(
     async (text: string, listId: string) => {
-
       try {
         const newTodo = await apiService.createTodo(text, listId);
         setTodos((prev) => [...prev, newTodo]);
 
         // Update filters to show last added todo
-        if (listFilter !== "all" && listFilter !== listId) {
-        setListFilter("all");
-      }
+        if (listFilter !== 'all' && listFilter !== listId) {
+          setListFilter('all');
+        }
       } catch (error) {
         console.error(ERROR_MESSAGES.ERROR_ADDING_TODO, error);
       }
