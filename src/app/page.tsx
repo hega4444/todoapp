@@ -61,33 +61,32 @@ function TodoApp() {
     });
   }, [setOnline, setConnectionError, setOffline]);
 
-
-  const loadData = useCallback(
-    async (showLoader: boolean = true) => {
-      try {
-        if (showLoader) {
-          setLoading(true);
-        }
-        const data = await apiService.getTodosAndLists();
-        setTodos(data.todos);
-        setLists(data.lists);
-        
-        setSelectedListId(currentId => {
-          if (data.lists.length > 0 && !data.lists.find(l => l.id === currentId)) {
-            return data.lists[0].id;
-          }
-          return currentId;
-        });
-      } catch (error) {
-        console.error(ERROR_MESSAGES.ERROR_LOADING_DATA, error);
-      } finally {
-        if (showLoader) {
-          setLoading(false);
-        }
+  const loadData = useCallback(async (showLoader: boolean = true) => {
+    try {
+      if (showLoader) {
+        setLoading(true);
       }
-    },
-    []
-  );
+      const data = await apiService.getTodosAndLists();
+      setTodos(data.todos);
+      setLists(data.lists);
+
+      setSelectedListId((currentId) => {
+        if (
+          data.lists.length > 0 &&
+          !data.lists.find((l) => l.id === currentId)
+        ) {
+          return data.lists[0].id;
+        }
+        return currentId;
+      });
+    } catch (error) {
+      console.error(ERROR_MESSAGES.ERROR_LOADING_DATA, error);
+    } finally {
+      if (showLoader) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   const loadFromLocalStorage = useCallback(() => {
     try {
@@ -256,12 +255,14 @@ function TodoApp() {
       try {
         // Optimistically update UI first
         const newLists = lists.filter((list) => list.id !== listId);
-        
+
         // Determine new selection before updating state
         let newSelectedListId = selectedListId;
         if (isCurrentlySelected) {
           if (newLists.length > 0) {
-            const personalList = newLists.find((list) => list.id === 'personal');
+            const personalList = newLists.find(
+              (list) => list.id === 'personal'
+            );
             const fallbackList =
               personalList ||
               newLists.sort(
@@ -279,7 +280,7 @@ function TodoApp() {
         if (newSelectedListId !== selectedListId) {
           setSelectedListId(newSelectedListId);
         }
-        
+
         // If user was viewing the deleted list, switch to 'all' to avoid showing stale data
         if (listFilter === listId) {
           setListFilter('all');

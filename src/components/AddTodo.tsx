@@ -27,7 +27,8 @@ export default function AddTodo({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const selectedList = lists.find((list) => list.id === selectedListId) || 
+  const selectedList =
+    lists.find((list) => list.id === selectedListId) ||
     (lists.length > 0 ? lists[0] : null);
 
   // Get a random available color that hasn't been used
