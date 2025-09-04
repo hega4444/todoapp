@@ -109,12 +109,21 @@ export default function TodoList({
   useEffect(() => {
     if (todoContainerRef.current) {
       const container = todoContainerRef.current;
-      const isAtBottom = container.scrollTop >= container.scrollHeight - container.clientHeight - 10;
+      const hasContainerOverflow = container.scrollHeight > container.clientHeight;
       
-      // Only scroll if container has overflow and user is near the bottom or it's a new addition
-      if (container.scrollHeight > container.clientHeight && (isAtBottom || todos.length > 0)) {
-        container.scrollTo({
-          top: container.scrollHeight,
+      if (hasContainerOverflow) {
+        // Desktop: scroll the container
+        const isAtBottom = container.scrollTop >= container.scrollHeight - container.clientHeight - 10;
+        if (isAtBottom || todos.length > 0) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      } else {
+        // Mobile: scroll the page since container doesn't overflow
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
           behavior: 'smooth'
         });
       }
