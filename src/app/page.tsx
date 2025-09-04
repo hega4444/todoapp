@@ -155,8 +155,8 @@ function TodoApp() {
         const newTodo = await apiService.createTodo(text, listId);
         setTodos((prev) => [...prev, newTodo]);
 
-        // Auto-filter to show the list if it was empty
-        if (listId != "all" && listId != selectedListId) {
+        // Update filters to show last added todo
+        if (listFilter !== "all" && listFilter !== listId) {
         setListFilter("all");
       }
       } catch (error) {
