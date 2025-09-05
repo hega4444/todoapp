@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { TodoListDocument, TodoList } from '@/types';
 
 /**
  * Get session token from Authorization header
@@ -10,4 +11,16 @@ export function getSessionTokenFromHeader(request: NextRequest): string | null {
     return authHeader.substring(7);
   }
   return null;
+}
+
+/**
+ * Format list for client response (converts _id to id)
+ */
+export function formatList(list: TodoListDocument): TodoList {
+  return {
+    id: list._id?.toString() || '',
+    name: list.name,
+    color: list.color,
+    createdAt: list.createdAt,
+  };
 }

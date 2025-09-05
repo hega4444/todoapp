@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { TodoListDocument } from '@/types';
-import { getSessionTokenFromHeader } from '@/app/api/utils';
-
-/**
- * Format list for client response
- */
-function formatList(list: any): {
-  id: string;
-  name: string;
-  color: string;
-  createdAt: Date;
-} {
-  return {
-    id: list._id?.toString() || list.id || '',
-    name: list.name,
-    color: list.color,
-    createdAt: list.createdAt,
-  };
-}
-
+import { getSessionTokenFromHeader, formatList } from '@/app/api/utils';
 
 /**
  * Get all lists for a user session
@@ -28,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     if (!sessionToken) {
       return NextResponse.json(
         { error: 'Authorization required' },
@@ -36,7 +18,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const lists = await db.collection('lists').find({ sessionToken }).toArray();
+    const lists = await db
+      .collection<TodoListDocument>('lists')
+      .find({ sessionToken })
+      .toArray();
     return NextResponse.json(lists.map(formatList));
   } catch (error) {
     console.error('Database error:', error);
@@ -63,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     if (!sessionToken) {
       return NextResponse.json(
         { error: 'Authorization required' },
@@ -78,7 +63,9 @@ export async function POST(request: NextRequest) {
       sessionToken,
     };
 
-    const result = await db.collection('lists').insertOne(newList);
+    const result = await db
+      .collection<TodoListDocument>('lists')
+      .insertOne(newList);
 
     return NextResponse.json(
       {

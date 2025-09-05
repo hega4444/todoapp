@@ -3,7 +3,6 @@ import mongodb from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getSessionTokenFromHeader } from '@/app/api/utils';
 
-
 /**
  * Delete a list and all its associated todos
  */
@@ -23,7 +22,7 @@ export async function DELETE(
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     if (!sessionToken) {
       return NextResponse.json(
         { error: 'Authorization required' },

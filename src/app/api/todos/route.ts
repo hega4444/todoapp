@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
 import { DEFAULT_LISTS } from '@/lib/constants';
-import { getSessionTokenFromHeader } from '@/app/api/utils';
+import { getSessionTokenFromHeader, formatList } from '@/app/api/utils';
+import { TodoDocument, TodoListDocument, Todo } from '@/types';
 
 /**
  * Create default lists for new users
  */
-async function createDefaultLists(db: any, sessionToken: string, lists: any[]) {
+async function createDefaultLists(
+  db: any,
+  sessionToken: string,
+  lists: TodoListDocument[]
+) {
   const defaultLists = DEFAULT_LISTS.map((list) => ({
     ...list,
     createdAt: new Date(),
@@ -26,46 +31,38 @@ async function createDefaultLists(db: any, sessionToken: string, lists: any[]) {
 /**
  * Decrypt todo text and format for client
  */
-function decryptTodo(todo: any, sessionToken: string) {
+function decryptTodo(todo: TodoDocument, sessionToken: string): Todo {
   try {
     const decryptedText = EncryptionService.isEncrypted(todo.text)
       ? EncryptionService.decrypt(todo.text, sessionToken)
       : todo.text; // Support legacy unencrypted todos
 
     return {
-      ...todo,
+      id: todo._id?.toString() || '',
       text: decryptedText,
-      id: todo._id.toString(),
-      _id: undefined,
+      completed: todo.completed,
+      listId: todo.listId,
+      createdAt: todo.createdAt,
+      updatedAt: todo.updatedAt,
     };
   } catch (error) {
     console.error('Failed to decrypt todo:', error);
     return {
-      ...todo,
+      id: todo._id?.toString() || '',
       text: '[Decryption Failed]',
-      id: todo._id.toString(),
-      _id: undefined,
+      completed: todo.completed,
+      listId: todo.listId,
+      createdAt: todo.createdAt,
+      updatedAt: todo.updatedAt,
     };
   }
 }
-
-/**
- * Format list for client response
- */
-function formatList(list: any) {
-  return {
-    ...list,
-    id: list._id ? list._id.toString() : list.id,
-    _id: undefined,
-  };
-}
-
 
 export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     if (!sessionToken) {
       return NextResponse.json(
         { error: 'Authorization required' },
@@ -74,8 +71,8 @@ export async function GET(request: NextRequest) {
     }
 
     const [todos, lists] = await Promise.all([
-      db.collection('todos').find({ sessionToken }).toArray(),
-      db.collection('lists').find({ sessionToken }).toArray(),
+      db.collection<TodoDocument>('todos').find({ sessionToken }).toArray(),
+      db.collection<TodoListDocument>('lists').find({ sessionToken }).toArray(),
     ]);
 
     // Create default lists for new users
@@ -112,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
-    
+
     if (!sessionToken) {
       return NextResponse.json(
         { error: 'Authorization required' },
