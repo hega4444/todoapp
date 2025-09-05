@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { getSessionTokenFromHeader } from '@/app/api/utils';
 
-/**
- * Get session token from Authorization header
- */
-function getSessionTokenFromHeader(request: NextRequest): string {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-  return 'default';
-}
 
 /**
  * Delete a list and all its associated todos
@@ -32,6 +23,13 @@ export async function DELETE(
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
+    
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 }
+      );
+    }
 
     // Delete all todos in this list first
     await db.collection('todos').deleteMany({ listId: id, sessionToken });

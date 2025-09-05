@@ -95,7 +95,9 @@ describe('/api/todos', () => {
         throw new Error('Decryption failed')
       })
 
-      const request = new NextRequest('http://localhost/api/todos')
+      const request = new NextRequest('http://localhost/api/todos', {
+        headers: { 'Authorization': 'Bearer session123' }
+      })
       const response = await GET(request)
       const data = await response.json()
 
@@ -179,11 +181,7 @@ describe('/api/todos', () => {
       expect(await response.json()).toEqual({ error: 'Internal server error' })
     })
 
-    it('uses default session token when none provided', async () => {
-      mockCollection.insertOne.mockResolvedValue({
-        insertedId: 'new_todo_id'
-      })
-
+    it('returns 401 when no authorization provided', async () => {
       const request = new NextRequest('http://localhost/api/todos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,8 +190,8 @@ describe('/api/todos', () => {
 
       const response = await POST(request)
       
-      expect(response.status).toBe(201)
-      expect(mockEncryption.encrypt).toHaveBeenCalledWith('New todo', 'default')
+      expect(response.status).toBe(401)
+      expect(await response.json()).toEqual({ error: 'Authorization required' })
     })
   })
 })

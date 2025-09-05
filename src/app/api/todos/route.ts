@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongodb from '@/lib/mongodb';
 import { EncryptionService } from '@/lib/encryption';
 import { DEFAULT_LISTS } from '@/lib/constants';
+import { getSessionTokenFromHeader } from '@/app/api/utils';
 
 /**
  * Create default lists for new users
@@ -59,21 +60,18 @@ function formatList(list: any) {
   };
 }
 
-/**
- * Get all todos and lists for a user session with automatic decryption
- */
-function getSessionTokenFromHeader(request: NextRequest): string {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-  return 'default';
-}
 
 export async function GET(request: NextRequest) {
   try {
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
+    
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 }
+      );
+    }
 
     const [todos, lists] = await Promise.all([
       db.collection('todos').find({ sessionToken }).toArray(),
@@ -114,6 +112,13 @@ export async function POST(request: NextRequest) {
 
     const db = await mongodb.connect();
     const sessionToken = getSessionTokenFromHeader(request);
+    
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 }
+      );
+    }
 
     const newTodo = {
       text: EncryptionService.encrypt(text, sessionToken),

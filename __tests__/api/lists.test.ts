@@ -75,7 +75,9 @@ describe('/api/lists', () => {
     it('returns empty array when no lists exist', async () => {
       mockCollection.toArray.mockResolvedValue([])
 
-      const request = new NextRequest('http://localhost/api/lists')
+      const request = new NextRequest('http://localhost/api/lists', {
+        headers: { 'Authorization': 'Bearer session123' }
+      })
       const response = await GET(request)
       const data = await response.json()
 
@@ -83,13 +85,12 @@ describe('/api/lists', () => {
       expect(data).toEqual([])
     })
 
-    it('uses default session token when none provided', async () => {
-      mockCollection.toArray.mockResolvedValue([])
-
+    it('returns 401 when no authorization provided', async () => {
       const request = new NextRequest('http://localhost/api/lists')
-      await GET(request)
+      const response = await GET(request)
 
-      expect(mockCollection.find).toHaveBeenCalledWith({ sessionToken: 'default' })
+      expect(response.status).toBe(401)
+      expect(await response.json()).toEqual({ error: 'Authorization required' })
     })
 
     it('handles database errors', async () => {
@@ -143,7 +144,10 @@ describe('/api/lists', () => {
 
       const request = new NextRequest('http://localhost/api/lists', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer session123'
+        },
         body: JSON.stringify({ name: '  Shopping List  ', color: '  #10b981  ' })
       })
 
@@ -194,11 +198,7 @@ describe('/api/lists', () => {
       expect(await response.json()).toEqual({ error: 'Name and color are required' })
     })
 
-    it('uses default session token when none provided', async () => {
-      mockCollection.insertOne.mockResolvedValue({
-        insertedId: 'new_list_id'
-      })
-
+    it('returns 401 when no authorization provided', async () => {
       const request = new NextRequest('http://localhost/api/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -207,12 +207,8 @@ describe('/api/lists', () => {
 
       const response = await POST(request)
       
-      expect(response.status).toBe(201)
-      expect(mockCollection.insertOne).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sessionToken: 'default'
-        })
-      )
+      expect(response.status).toBe(401)
+      expect(await response.json()).toEqual({ error: 'Authorization required' })
     })
 
     it('handles database errors during creation', async () => {
